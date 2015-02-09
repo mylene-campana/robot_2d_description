@@ -1,11 +1,12 @@
 #/usr/bin/env python
 # Script which goes with robot_2d_description package.
 # Load simple 'robot' point-cylinder and cylinder-obstacle to test methods.
-# "roslaunch robot_2d_description cylinder_point.launch"
 
 
 from hpp.gepetto import Viewer, PathPlayer
+
 from hpp.corbaserver.robot_2d import Robot
+from hpp.corbaserver import ProblemSolver
 from hpp.corbaserver import Client
 import time
 import sys
@@ -15,11 +16,16 @@ sys.path.append('/local/mcampana/devel/hpp/src/test-hpp/script')
 robot = Robot ('robot_2d')
 ps = ProblemSolver (robot)
 cl = robot.client
+cl.obstacle.loadObstacleModel('robot_2d_description','cylinder_obstacle','')
+
+Viewer.withFloor = True
 r = Viewer (ps)
 pp = PathPlayer (cl, r)
 
 # Load box obstacle in HPP for collision avoidance #
 cl.obstacle.loadObstacleModel('robot_2d_description','cylinder_obstacle','')
+r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
+
 
 # q = [x, y] # limits in URDF file
 q1 = [-2, 0]; q2 = [-1, 1]
@@ -61,37 +67,32 @@ cl.problem.pathLength(1)
 ## Debug Optimization Tools ##############
 
 import matplotlib.pyplot as plt
-num_log = 28428
+num_log = 21031
 from parseLog import parseNodes, parsePathVector
 from mutable_trajectory_plot import planarPlotCylinder, addNodePlot, addPathPlot
 
-collConstrNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:335: qCollConstr = ')
-collNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:329: qColl = ')
+collConstrNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:182: qCollConstr = ')
+collNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:176: qColl = ')
 
-x0Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:288: x0=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:290: finish path parsing',2,0)
-x1Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:293: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:295: finish path parsing',2,0)
-x2Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:293: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:295: finish path parsing',3,0)
-x3Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:293: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:295: finish path parsing',4,0)
-x4Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:293: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:295: finish path parsing',5,0)
-x5Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:293: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:295: finish path parsing',6,0)
+x0Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:139: x0=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:141: finish path parsing',2,0)
+x1Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:144: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:146: finish path parsing',2,0)
+x2Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:144: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:146: finish path parsing',3,0)
+x3Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:144: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:146: finish path parsing',4,0)
+x4Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:144: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:146: finish path parsing',5,0)
+x5Path = parsePathVector (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:144: x0+alpha*p -> x1=','INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:146: finish path parsing',6,0)
 
 plt = planarPlotCylinder (cl, 7, 8, plt) # initialize 2D plot with obstacles and path
 plt = addNodePlot (collConstrNodes, 'bo', 'qConstr', plt)
-plt = addNodePlot (collNodes, 'ro', 'qCol', plt)
-plt = addPathPlot (cl, x0Path, 'm', plt)
-plt = addPathPlot (cl, x1Path, 'g', plt)
-plt = addPathPlot (cl, x2Path, 'b', plt)
-plt = addPathPlot (cl, x3Path, 'y', plt)
-plt = addPathPlot (cl, x4Path, 'c', plt)
-plt = addPathPlot (cl, x5Path, '0.75', plt)
+plt = addNodePlot (collNodes, 'ro', 1, 'qCol', plt)
+plt = addPathPlot (cl, x0Path, 'm', 1, plt)
+plt = addPathPlot (cl, x1Path, 'g', 1, plt)
+plt = addPathPlot (cl, x2Path, 'b', 1, plt)
+plt = addPathPlot (cl, x3Path, 'y', 1, plt)
+plt = addPathPlot (cl, x4Path, 'c', 1, plt)
+plt = addPathPlot (cl, x5Path, '0.75', 1, plt)
 plt.show() # will reset plt
 
 #####################################################################
-
-# Display obstacle(s) from launch file
-r.addObject('obst0','obstacle_base')
-r(q1)
-
 
 ## DEBUG commands
 cl.robot.setCurrentConfig(q2)
@@ -103,7 +104,4 @@ r( cl.problem.configAtDistance(0,5) )
 cl.problem.optimizePath (0)
 cl.problem.clearRoadmap ()
 cl.problem.resetGoalConfigs ()
-
-
-
 
