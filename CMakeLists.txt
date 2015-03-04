@@ -39,6 +39,12 @@ install(FILES urdf/object.urdf
 install(FILES urdf/cylinder_obstacle.urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
   )
+install(FILES urdf/cylinder_obstacle2.urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+  )
+install(FILES urdf/box.urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+  )
 install(FILES srdf/object.srdf 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/srdf
   )
