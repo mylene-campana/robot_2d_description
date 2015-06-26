@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 sys.path.append('/local/mcampana/devel/hpp/src/test-hpp/script')
 
 robot = Robot ('robot_2d')
+robot.setJointBounds('j_translation_x', [-100, 100])
+robot.setJointBounds('j_translation_y', [-2, 2])
 ps = ProblemSolver (robot)
 cl = robot.client
 cl.obstacle.loadObstacleModel('robot_2d_description','box','')
@@ -28,51 +30,47 @@ dist=100
 q1 = [-dist, 1]; q2 = [-0.8, 1]; q3 = [0.5, 1.5]; q4 = [0.7, 0]; q5 = [-0.7, -1.7];
 q6 = [0.4,-1.5]; q7 = [-0.6, -0.2]; q8 = [0.2, 0.2]; q9 = [1, -1]; q10 = [dist, -1]; 
 
-cl.problem.setInitialConfig (q1); cl.problem.addGoalConfig (q2)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q2); cl.problem.addGoalConfig (q3)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q3); cl.problem.addGoalConfig (q4)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q4); cl.problem.addGoalConfig (q5)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q5); cl.problem.addGoalConfig (q6)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q6); cl.problem.addGoalConfig (q7)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q7); cl.problem.addGoalConfig (q8)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q8); cl.problem.addGoalConfig (q9)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q9); cl.problem.addGoalConfig (q10)
-cl.problem.solve (); cl.problem.resetGoalConfigs ()
-cl.problem.setInitialConfig (q1); cl.problem.addGoalConfig (q10); cl.problem.solve ();
+ps.setInitialConfig (q1); ps.addGoalConfig (q2)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q2); ps.addGoalConfig (q3)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q3); ps.addGoalConfig (q4)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q4); ps.addGoalConfig (q5)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q5); ps.addGoalConfig (q6)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q6); ps.addGoalConfig (q7)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q7); ps.addGoalConfig (q8)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q8); ps.addGoalConfig (q9)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q9); ps.addGoalConfig (q10)
+ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q1); ps.addGoalConfig (q10); ps.solve ();
 
 
 # pp(9) = p0 final
-begin=time.time()
-cl.problem.optimizePath(9) # pp(10) = p1 final
-end=time.time()
-print "Optim time: "+str(end-begin)
+ps.optimizePath(9) # pp(10) = p1 final
 
-#len(ps.getWaypoints (0))
+ps.pathLength(9)
+ps.pathLength(10)
 cl.problem.getIterationNumber()
-cl.problem.pathLength(9)
-cl.problem.pathLength(10)
 
 
 ## Debug Optimization Tools ##############
 
 import matplotlib.pyplot as plt
-num_log = 4230
+num_log = 16020
 from parseLog import parseNodes, parsePathVector
 from mutable_trajectory_plot import planarBoxPlot, addNodePlot, addPathPlot
 
-collConstrNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:192: qCollConstr = ')
-collNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:186: qColl = ')
+collConstrNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:228: qCollConstr = ')
+collNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:222: qColl = ')
 
-x1initLine = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:148: x0+alpha*p -> x1='
-x1finishLine = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:150: finish path parsing'
+x1initLine = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:184: x0+alpha*p -> x1='
+x1finishLine = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:186: finish path parsing'
 x0Path = parsePathVector (num_log, x1initLine, x1finishLine, 1, 0)
 x1Path = parsePathVector (num_log, x1initLine, x1finishLine, 2, 0)
 x2Path = parsePathVector (num_log, x1initLine, x1finishLine, 3, 0)
@@ -91,16 +89,19 @@ plt = addNodePlot (collConstrNodes, 'bo', 'qConstr', plt)
 plt = addNodePlot (collNodes, 'ro', 'qCol', plt)
 plt.show() # will reset plt
 
+ps.optimizePath(10)
+plt = planarBoxPlot (cl, 10, 11, plt, 2.5)
+plt.show()
+
 #####################################################################
 
 ## DEBUG commands
-cl.robot.setCurrentConfig(q2)
-cl.robot.collisionTest()
+robot.isConfigValid(q1)
 cl.robot.distancesToCollision()
 from numpy import *
 argmin(cl.robot.distancesToCollision()[0])
-r( cl.problem.configAtDistance(0,5) )
-cl.problem.optimizePath (0)
-cl.problem.clearRoadmap ()
-cl.problem.resetGoalConfigs ()
+r( ps.configParam(0,5) )
+ps.optimizePath (0)
+ps.clearRoadmap ()
+ps.resetGoalConfigs ()
 

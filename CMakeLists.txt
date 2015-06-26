@@ -1,18 +1,18 @@
-# Copyright (c) 2014-2015 CNRS
+# Copyright (c) 2015 CNRS
 # Author: Mylene Campana
 #
 # This file is part of robot_2d_description.
-# hpp-hrp2 is free software: you can redistribute it
+# robot_2d_description is free software: you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation, either version
 # 3 of the License, or (at your option) any later version.
 #
-# hpp-hrp2 is distributed in the hope that it will be
+# robot_2d_description is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 # of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Lesser Public License for more details.  You should have
 # received a copy of the GNU Lesser General Public License along with
-# hpp-hrp2.  If not, see
+# robot_2d_description.  If not, see
 # <http://www.gnu.org/licenses/>.
 
 # Requires at least CMake 2.6 to configure the package.
@@ -42,10 +42,23 @@ install(FILES urdf/cylinder_obstacle.urdf
 install(FILES urdf/cylinder_obstacle2.urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
   )
+install(FILES urdf/environment_2d.urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+  )
+install(FILES urdf/environment_2d_harder.urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+  )
 install(FILES urdf/box.urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
   )
 install(FILES srdf/object.srdf 
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/srdf
+  )
+  
+install(FILES urdf/large_object.urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+  )
+install(FILES srdf/large_object.srdf 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/srdf
   )
 install (FILES

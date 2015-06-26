@@ -119,3 +119,14 @@ def plotRectangles_comb (plt):
     plt.gcf().gca().add_artist(plt.Rectangle((-1-dl/2,1.6-0.8/2),dl,0.8,color='g')) # left small
     plt.gcf().gca().add_artist(plt.Rectangle((1-dl/2,-1.6-0.8/2),dl,0.8,color='g')) # right small
     return plt
+
+# --------------------------------------------------------------------#
+
+# Plot 2D rectangles for parabola environment
+def plotRectangles_parab (plt, obstacles):
+    lw = 1.4 # linewidth
+    obstColor = 'r'
+    for i in np.arange(0, len(obstacles)-1, 1):
+        plt.plot([obstacles[i][0], obstacles[i+1][0]], [obstacles[i][1], obstacles[i+1][1]], obstColor, linewidth=lw) 
+    
+    return plt

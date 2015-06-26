@@ -91,7 +91,7 @@ def parseNodes (pid, prefix):
 # Parse a pathVector returned in a hpp log file, until the endLine is reached.
 # iterNB allows to select the optim iteration which we want to plot.
 def parsePathVector (pid, beginLine, endLine, iterNB, skipLines):
-    prefixConfig = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/gradient-based.cc:239: '
+    prefixConfig = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/include/hpp/core/path-optimization/gradient-based.hh:82: '
     l = len(prefixConfig)
     lineNB = 0
     itNB = 1 # current iteration number (of optim algo)
@@ -123,4 +123,45 @@ def parsePathVector (pid, beginLine, endLine, iterNB, skipLines):
                             return np.array (configs) # make array and finish
                 itNB = itNB+1
 
+# --------------------------------------------------------------------#
+
+# Parse parabola information contained in a hpp log
+def parseParabola (pid, parabNB):
+    prefixConfig = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-path.cc:65: entering virtual bool hpp::core::ParabolaPath::impl_compute(hpp::core::ConfigurationOut_t, hpp::core::value_type) const'
+    prefixX = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-path.cc:65: x: '
+    prefixFX = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-path.cc:66: f(x): '
+    endLine = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/discretized-collision-checking.cc:112: exiting virtual bool hpp::core::ParabolaPath::impl_compute(hpp::core::ConfigurationOut_t, hpp::core::value_type) const'
+    endLine2 = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-planner.cc:141: exiting virtual bool hpp::core::ParabolaPath::impl_compute(hpp::core::ConfigurationOut_t, hpp::core::value_type) const'
+    endLine3 = 'INFO:/local/mcampana/devel/hpp/install/include/hpp/core/basic-configuration-shooter.hh:61: exiting virtual bool hpp::core::ParabolaPath::impl_compute(hpp::core::ConfigurationOut_t, hpp::core::value_type) const'
+    
+    lineNB = 0
+    itNB = 1 # parabola number
+    confVect = [0, 0] # 2D row
+    with open (logFile + "journal." + str(pid) + ".log") as f:
+        lines=f.readlines()
+        configs = []
+        for line in lines:
+            lineNB = lineNB+1
+            if line [:len(prefixConfig)] == prefixConfig:
+                if (itNB == parabNB): # wanted parabola
+                    #lineNB = lineNB + 1 # Start parsing path until the final line is reached
+                    while (1):
+                        actualLine = lines[lineNB]
+                        print actualLine
+                        actualLine1 = lines[lineNB+1]
+                        print actualLine1
+                        suffix = actualLine[len (prefixX):]
+                        suffix1 = actualLine1[len (prefixFX):]
+                        st = suffix.strip ('\n') # remove end characters
+                        st1 = suffix1.strip ('\n')
+                        confVect[0] = float(suffix)
+                        confVect[1] = float(suffix1)
+                        configs.append(confVect[:])
+                        print confVect
+                        lineNB = lineNB + 2 + 1 # skip gamma line
+                        print lines [lineNB].strip ('\n')
+                        if (lines [lineNB].strip ('\n') == endLine) or (lines [lineNB].strip ('\n') == endLine2) or (lines [lineNB].strip ('\n') == endLine3):
+                            print "END OF PARSING"
+                            return np.array (configs) # make array and finish
+                itNB = itNB+1
 
