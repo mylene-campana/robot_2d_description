@@ -19,7 +19,6 @@ cl.obstacle.loadObstacleModel('robot_2d_description','box','')
 
 """
 from hpp.gepetto import Viewer, PathPlayer
-Viewer.withFloor = True
 r = Viewer (ps)
 pp = PathPlayer (cl, r)
 r.loadObstacleModel ("robot_2d_description","box","box")
@@ -49,15 +48,55 @@ ps.solve (); ps.resetGoalConfigs ()
 ps.setInitialConfig (q9); ps.addGoalConfig (q10)
 ps.solve (); ps.resetGoalConfigs ()
 ps.setInitialConfig (q1); ps.addGoalConfig (q10); ps.solve ();
+print ps.pathLength(9)
 
+ps.addPathOptimizer("GradientBased")
+ps.optimizePath (9)
+ps.numberPaths()
+print ps.pathLength(ps.numberPaths()-1)
 
+"""
 # pp(9) = p0 final
 ps.optimizePath(9) # pp(10) = p1 final
 
 ps.pathLength(9)
 ps.pathLength(10)
-cl.problem.getIterationNumber()
 
+
+ps.addPathOptimizer('RandomShortcut')
+ps.optimizePath (9)
+ps.pathLength(10)
+
+ps.clearPathOptimizers()
+ps.addPathOptimizer("GradientBased")
+ps.optimizePath (9)
+ps.numberPaths()
+ps.pathLength(ps.numberPaths()-1)
+
+pp(ps.numberPaths()-1)
+
+
+from hpp.gepetto import Viewer, PathPlayer
+r = Viewer (ps)
+pp = PathPlayer (cl, r)
+r.loadObstacleModel ("robot_2d_description","box","box")
+
+
+import numpy as np
+dt = 0.06
+nPath = ps.numberPaths()-1
+lineNamePrefix = "pathyyjf"
+for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+    lineName = lineNamePrefix+str(t)
+    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0.2],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0.2],[0,0.3,1,1])
+    r.client.gui.addToGroup (lineName, r.sceneName)
+
+nPath = 9
+lineNamePrefix = "jhk"
+for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+    lineName = lineNamePrefix+str(t)
+    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0.12],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0.12],[1,0.4,0.3,1])
+    r.client.gui.addToGroup (lineName, r.sceneName)
 
 ## Debug Optimization Tools ##############
 
@@ -104,4 +143,4 @@ r( ps.configParam(0,5) )
 ps.optimizePath (0)
 ps.clearRoadmap ()
 ps.resetGoalConfigs ()
-
+"""

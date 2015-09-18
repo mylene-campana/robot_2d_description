@@ -137,14 +137,15 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <link name="l_object_floor"> <!-- brown floor -->
+  <link name="l_object_floor"> <!-- floor -->
     <visual>
       <origin xyz="0.7 0 -0.05" rpy="0 0 0"/> <!-- origin not taken in account ! -->
       <geometry>
-        <box size="4.2 8.4 0.05"/>
+        <!--<box size="4.2 8.4 0.05"/>-->
+        <box size="50 40 0.05"/>
       </geometry>
       <material name="White">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
     </visual>
   </link>

@@ -18,8 +18,8 @@ cl = robot.client
 from hpp.gepetto import Viewer, PathPlayer
 r = Viewer (ps)
 pp = PathPlayer (cl, r)
-r.loadObstacleModel ("robot_2d_description","environment_2d","environment_2d")
-#r.loadObstacleModel ("robot_2d_description","environment_2d_harder","environment_2d_harder")
+#r.loadObstacleModel ("robot_2d_description","environment_2d","environment_2d")
+r.loadObstacleModel ("robot_2d_description","environment_2d_harder","environment_2d_harder")
 #r.loadObstacleModel ("iai_maps", "labyrinth", "labyrinth")
 #r.loadObstacleModel ("iai_maps", "labyrinth2", "labyrinth2") 
 
@@ -54,7 +54,7 @@ cl.problem.getWaypoints (4)
 ## Plot whole path in viewer ##
 import numpy as np
 nPath = 0
-dt = 0.05
+dt = 0.1
 for t in np.arange(0., cl.problem.pathLength(nPath), dt):
     lineName = "g"+str(t)
     r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0.2],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0.2],[0,0.3,1,1])
@@ -70,14 +70,14 @@ r.stopCapture ()
 
 ## Path drawing ##
 import matplotlib.pyplot as plt
-num_log = 18623
+num_log = 23374
 from parseLog import parseNodes, parseParabola
 from parabola_plot_tools import parabPlot, addNodePlot, plotParsedParab
 nPath = 0
 mu = 0.5
 
-RandConfig = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-planner.cc:188: qrand: ')
-ProjNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-planner.cc:190: q_proj: ')
+RandConfig = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-planner.cc:187: qrand: ')
+ProjNodes = parseNodes (num_log, 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/parabola/parabola-planner.cc:203: q_proj: ')
 
 plt = addNodePlot (RandConfig, 'bo', 'qrand', plt)
 plt = addNodePlot (ProjNodes, 'ro', 'qproj', plt)

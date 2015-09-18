@@ -17,8 +17,8 @@ Pi = math.pi
 # --------------------------------------------------------------------#
 
 def parabPlot (cl, nPath, mu, plt):
-    plt = plotRectangles_parab (plt) # plot environment
-    #plt = plotHardRectangles_parab (plt) # plot harder environment
+    #plt = plotRectangles_parab (plt) # plot environment
+    plt = plotHardRectangles_parab (plt) # plot harder environment
     init = cl.problem.getInitialConfig ()
     goal = cl.problem.getGoalConfigs ()[0] # first goal
     
