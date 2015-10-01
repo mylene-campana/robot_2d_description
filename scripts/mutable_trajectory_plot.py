@@ -20,26 +20,20 @@ def planarPlot (cl, nPath0, nPath1, plt, lim):
     plt.gcf().gca().add_artist(plt.Circle((-3,2),1,color='g')) # cylinder 2 (optional)
     init = cl.problem.getInitialConfig ()
     goal = cl.problem.getGoalConfigs ()[0] # first goal
-    """i = 0
-    for n in cl.problem.nodes() :
-        if i>1: # avoid 2 first nodes (init and goal)
-            plt.plot(n[0], n[1], 'ro')
-            plt.text(n[0]+.02, n[1], r'qNew%i' %(i), fontsize=8)
-        i=i+1
-    """
+    
     for t in np.arange(0., cl.problem.pathLength(nPath1), dt):
         plt.plot([cl.problem.configAtParam(nPath1, t)[0], \
                      cl.problem.configAtParam(nPath1, t+dt)[0]], \
                      [cl.problem.configAtParam(nPath1, t)[1], \
-                     cl.problem.configAtParam(nPath1, t+dt)[1]], 'k', linewidth=1.8, label="optim." if t == 0. else "")
+                     cl.problem.configAtParam(nPath1, t+dt)[1]], 'k', linewidth=1.8)
     
     for t in np.arange(0., cl.problem.pathLength(nPath0), dt):
         plt.plot([cl.problem.configAtParam(nPath0, t)[0], \
                  cl.problem.configAtParam(nPath0, t+dt)[0]], \
                  [cl.problem.configAtParam(nPath0, t)[1], \
-                 cl.problem.configAtParam(nPath0, t+dt)[1]], 'r', label="init." if t == 0. else "")
+                 cl.problem.configAtParam(nPath0, t+dt)[1]], 'r')
     
-    plt.legend()
+    #plt.legend()
     plt.axis([-lim, lim, -lim, lim])
     plt.xlabel('x'); plt.ylabel('y')
     plt.title('trajectory'); #plt.grid()
@@ -81,13 +75,25 @@ def planarBoxPlot (cl, nPath0, nPath1, plt, lim):
 
 # Plot 2D nodes (from parseLog) with given color and text.
 # For example, nodeName = r'qCol'    and   nodeColor = 'bo'
-def addNodePlot (nodeList, nodeColor, nodeName, plt):
+def addNodePlot (nodeList, nodeColor, nodeName, markerSize, plt):
     i = 0
     for n in nodeList :
-        plt.plot(n[0], n[1], nodeColor)
+        plt.plot(n[0], n[1], nodeColor,markersize=markerSize)
         #plt.text(n[0]+.02, n[1], nodeName+'%i' %(i), fontsize=8)
         i = i+1
     return plt
+
+# --------------------------------------------------------------------#
+
+# Plot 2D circles (from parseLog) with given color and size (to respect robot's size)
+def addCircleNodePlot (nodeList, nodeColor, nodeSize, plt):
+    i = 0
+    for n in nodeList :
+        plt.gcf().gca().add_artist(plt.Circle((n[0],n[1]),nodeSize,color=nodeColor))
+        i = i+1
+    return plt
+
+
 
 # --------------------------------------------------------------------#
 
@@ -107,6 +113,15 @@ def addPathPlot (cl, path, pathColor, lw, plt):
     plt.plot([init[0], path[0][0]], [init[1], path[0][1]], pathColor, linewidth=lw)
     plt.plot([goal[0], path[size-1][0]], [goal[1], path[size-1][1]], pathColor, linewidth=lw)
     return plt
+
+# --------------------------------------------------------------------#
+
+# Plot 2D path from problem-solver.
+def addCorbaPathPlot (cl, nPath, pathColor, plt):
+    for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+        plt.plot([cl.problem.configAtParam(nPath, t)[0], cl.problem.configAtParam(nPath, t+dt)[0]], [cl.problem.configAtParam(nPath, t)[1], cl.problem.configAtParam(nPath, t+dt)[1]], pathColor, linewidth=1.5)
+    return plt
+
 # --------------------------------------------------------------------#
 
 # Plot 2D rectangles for normal comb (no broken tooth)
@@ -127,6 +142,19 @@ def plotRectangles_parab (plt, obstacles):
     lw = 1.4 # linewidth
     obstColor = 'r'
     for i in np.arange(0, len(obstacles)-1, 1):
-        plt.plot([obstacles[i][0], obstacles[i+1][0]], [obstacles[i][1], obstacles[i+1][1]], obstColor, linewidth=lw) 
-    
+        plt.plot([obstacles[i][0], obstacles[i+1][0]], [obstacles[i][1], obstacles[i+1][1]], obstColor, linewidth=lw)
+    return plt
+
+# --------------------------------------------------------------------#
+
+# Plot 2D nodes (from parseLog) with given color, text and size.
+# Plot also lines given in a list and associated to nodes. (e.g. 'x1_J1' nodes and 'u' lines)
+def addNodeAndLinePlot (nodeList, lineList, nodeColor, markerSize, lineColor, lw, plt):
+    i = 0
+    for i in range(0,len(nodeList)):
+        n = nodeList[i]
+        u = lineList[i]
+        plt.plot(n[0], n[1], nodeColor,markersize=markerSize)
+        plt.plot([n[0], n[0]+u[0]], [n[1], n[1]+u[1]], lineColor, linewidth=lw)
+        i = i+1
     return plt

@@ -65,14 +65,16 @@ def parseGrad (pid, prefix):
 # --------------------------------------------------------------------#
 
 # Parse configurations without end condition. 
-# Used to parse guard nodes of visibility-prm algorithm.
+# Used to parse guard nodes of visibility-prm algorithm or configuration in
+# Gradient-based optimization.
 def parseNodes (pid, prefix):
-    l = len (prefix)
+    prefixFile = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/collision-constraints-result.hh:'
+    l = len (prefixFile+prefix)
     lend = len(endWhile)
     with open (logFile + "journal." + str(pid) + ".log") as f:
         nodes = []
         for line in f:
-            if line [:l] == prefix:
+            if line [:l] == prefixFile+prefix:
                 suffix = line [l:]
                 st = suffix.strip (',\n') # remove end characters
                 sp = st.split (',') # separate numbers with coma
@@ -164,4 +166,29 @@ def parseParabola (pid, parabNB):
                             print "END OF PARSING"
                             return np.array (configs) # make array and finish
                 itNB = itNB+1
+
+# --------------------------------------------------------------------#
+
+# Parse 3D points for collision-constraint visualization
+# points are defined as: (x y z)
+def parseCollConstrPoints (pid, prefix):
+    prefixFile = 'INFO:/local/mcampana/devel/hpp/src/hpp-core/src/path-optimization/collision-constraints-result.hh:'
+    
+    l = len (prefixFile+prefix)
+    with open (logFile + "journal." + str(pid) + ".log") as f:
+        points = []
+        for line in f:
+            if line [:l] == prefixFile+prefix:
+                suffix = line [l:]
+                st = suffix.strip (')\n') # remove end characters
+                sp = st.split (' ') # separate numbers with coma
+                try:
+                    point = map (float, sp) # convert into float
+                    points.append (point)
+                    
+                except:
+                    print ("st=%s"%st)
+                    print ("sp=%s"%sp)
+    #return np.array (zip (*nodes)) # transpose and make array
+    return np.array (points) # make array
 

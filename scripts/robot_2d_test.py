@@ -16,24 +16,21 @@ cl = robot.client
 cl.obstacle.loadObstacleModel('robot_2d_description','cylinder_obstacle','')
 
 # q = [x, y] # limits in URDF file
-q1 = [-2, 0]; q2 = [-0.1, 2]
-ps.setInitialConfig (q1); ps.addGoalConfig (q2); ps.solve ()
-ps.resetGoalConfigs ()
-q1 = [-0.1, 2]; q2 = [0.1, 2]
-ps.setInitialConfig (q1); ps.addGoalConfig (q2); ps.solve ()
-ps.resetGoalConfigs ()
-q1 = [0.1, 2]; q2 = [2, 0]
-ps.setInitialConfig (q1); ps.addGoalConfig (q2); ps.solve ()
-ps.resetGoalConfigs ()
-q1 = [-2, 0]; q2 = [2, 0]
-ps.setInitialConfig (q1); ps.addGoalConfig (q2); ps.solve ()
+q1 = [-2, 0]; q2 = [-0.2, 2]; q3 = [0.2, 2]; q4 = [2, 0]
+ps.setInitialConfig (q1); ps.addGoalConfig (q2); ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q2); ps.addGoalConfig (q3); ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q3); ps.addGoalConfig (q4); ps.solve (); ps.resetGoalConfigs ()
+ps.setInitialConfig (q1); ps.addGoalConfig (q4); ps.solve (); ps.resetGoalConfigs ()
 # pp(3) = p0 final
 
-ps.addPathOptimizer("GradientBased")
+#ps.addPathOptimizer("GradientBased")
+#ps.addPathOptimizer("Prune")
+ps.addPathOptimizer("PartialRandomShortcut")
 ps.optimizePath(3) # pp(4) = p1 final
 
 ps.pathLength(3)
 ps.pathLength(4)
+ps.getWaypoints (3)
 ps.getWaypoints (4)
 # should be [-0.07 0] [0.07 0] if alpha_init=1
 
@@ -126,4 +123,61 @@ ps.optimizePath (0)
 ps.clearRoadmap ()
 ps.resetGoalConfigs ()
 
-#plt = addNodePlot ([[-0.0704869758025401, 0.03483902858869], [0.0694026091630802, 0.03736485618806798]], 'ro', 'qCol', plt)
+from hpp.gepetto import Viewer, PathPlayer
+r = Viewer (ps)
+pp = PathPlayer (robot.client, r)
+r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
+
+# plot paths in viewer
+import numpy as np
+dt = 0.1
+nPath = 4
+lineNamePrefix = "optimized_pathi"
+for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+    lineName = lineNamePrefix+str(t)
+    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0.1],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0.1],[0,1,0.3,1])
+    r.client.gui.addToGroup (lineName, r.sceneName)
+
+nPath = 3
+lineNamePrefix = "initial_path"
+for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+    lineName = lineNamePrefix+str(t)
+    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0],[1,0.3,0,1])
+    r.client.gui.addToGroup (lineName, r.sceneName)
+
+nPath = 3
+points = []
+for t in np.arange(0., cl.problem.pathLength(nPath), dt):
+    points.append ([cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0])
+
+r.client.gui.addCurve ("initCurvPathc",points,[1,0.3,0,1])
+r.client.gui.addToGroup ("initCurvPathc", r.sceneName)
+
+
+qColl = [-0.107713,0.627621]
+qFree = [-0.10918,0.697357]
+contactPoint = [-0.0843029,0.491217,0,1,0,0,0] # x2_J2
+x1_J2 = [-0.0857704,0.560953,0,1,0,0,0]
+u = [-0.00146755,0.0697357,0,0,0,0,0]
+
+uLine1 = +
+uLine2 = contactPoint
+
+sphereName = "contactPointSpheretsd"
+r.client.gui.addSphere (sphereName,0.015,[0.7,0.5,0.3,1])
+r.client.gui.applyConfiguration (sphereName,x1_J2)
+r.client.gui.addToGroup (sphereName, r.sceneName)
+r.client.gui.refresh ()
+sphereName = "contactPointSpheredrhy"
+r.client.gui.addSphere (sphereName,0.015,[0.7,0.5,0.3,1])
+r.client.gui.applyConfiguration (sphereName,contactPoint)
+r.client.gui.addToGroup (sphereName, r.sceneName)
+r.client.gui.refresh ()
+
+r.client.gui.removeFromGroup ("initCurvPath", r.sceneName)
+
+lineName = "u2"
+uLine = np.array(x1_J2)+np.array(u)
+r.client.gui.addLine(lineName,[uLine[0],uLine[1],uLine[2]],[contactPoint[0],contactPoint[1],contactPoint[2]],[1,0.3,0,1])
+r.client.gui.addToGroup (lineName, r.sceneName)
+
