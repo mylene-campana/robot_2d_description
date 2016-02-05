@@ -86,7 +86,8 @@ def parseNodes (pid, prefix):
                     print ("st=%s"%st)
                     print ("sp=%s"%sp)
     #return np.array (zip (*nodes)) # transpose and make array
-    return np.array (nodes) # make array
+    #return np.array (nodes) # make array
+    return nodes # list, not array
 
 # --------------------------------------------------------------------#
 
@@ -190,5 +191,5 @@ def parseCollConstrPoints (pid, prefix):
                     print ("st=%s"%st)
                     print ("sp=%s"%sp)
     #return np.array (zip (*nodes)) # transpose and make array
-    return np.array (points) # make array
+    return points # list, not array
 

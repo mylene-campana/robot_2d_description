@@ -35,16 +35,19 @@ ps.setInitialConfig (q6); ps.addGoalConfig (q7); ps.solve (); ps.resetGoalConfig
 ps.setInitialConfig (q7); ps.addGoalConfig (q8); ps.solve (); ps.resetGoalConfigs ()
 ps.setInitialConfig (q1); ps.addGoalConfig (q8); ps.solve (); # 7
 
+
+nInitialPath = ps.numberPaths()-1 #8
+ps.pathLength(nInitialPath)
+
 ps.addPathOptimizer("GradientBased")
 #ps.addPathOptimizer("Prune")
 #ps.addPathOptimizer("PartialRandomShortcut")
-ps.optimizePath(7)
 
-ps.pathLength(7)
-ps.pathLength(8)
+ps.optimizePath(nInitialPath)
+ps.pathLength(ps.numberPaths()-1)
 
-ps.getWaypoints (7)
-ps.getWaypoints (8)
+ps.getWaypoints (nInitialPath)
+ps.getWaypoints (ps.numberPaths()-1)
 
 
 
@@ -60,7 +63,7 @@ git commit -m "Remove inverse Hessian computation from Cost"
 ## Debug Optimization Tools ##############
 
 import matplotlib.pyplot as plt
-num_log = 12640
+num_log = 19352
 from parseLog import parseNodes, parsePathVector
 from mutable_trajectory_plot import planarPlot, addNodePlot, addPathPlot
 
@@ -100,67 +103,9 @@ r( ps.configAtParam(0,5) )
 ps.optimizePath (0)
 ps.clearRoadmap ()
 ps.resetGoalConfigs ()
+r.client.gui.removeFromGroup (elementName, r.sceneName)
 
-from hpp.gepetto import Viewer, PathPlayer
-r = Viewer (ps)
-pp = PathPlayer (robot.client, r)
-r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
-
-# plot paths in viewer
-import numpy as np
-dt = 0.1
-nPath = 8
-lineNamePrefix = "optimized_pathghj"
-for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-    lineName = lineNamePrefix+str(t)
-    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0.1],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0.1],[0,1,0.3,1])
-    r.client.gui.addToGroup (lineName, r.sceneName)
-
-nPath = 7
-lineNamePrefix = "initial_path"
-for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-    lineName = lineNamePrefix+str(t)
-    r.client.gui.addLine(lineName,[cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0],[cl.problem.configAtParam(nPath, t+dt)[0],cl.problem.configAtParam(nPath, t+dt)[1],0],[1,0.3,0,1])
-    r.client.gui.addToGroup (lineName, r.sceneName)
-
-
-nPath = 3
-points = []
-for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-    points.append ([cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0])
-
-r.client.gui.addCurve ("initCurvPathc",points,[1,0.3,0,1])
-r.client.gui.addToGroup ("initCurvPathc", r.sceneName)
-
-
-qColl = [-0.107713,0.627621]
-qFree = [-0.10918,0.697357]
-contactPoint = [-0.0843029,0.491217,0,1,0,0,0] # x2_J2
-x1_J2 = [-0.0857704,0.560953,0,1,0,0,0]
-u = [-0.00146755,0.0697357,0,0,0,0,0]
-
-uLine1 = +
-uLine2 = contactPoint
-
-sphereName = "contactPointSpheretsd"
-r.client.gui.addSphere (sphereName,0.015,[0.7,0.5,0.3,1])
-r.client.gui.applyConfiguration (sphereName,x1_J2)
-r.client.gui.addToGroup (sphereName, r.sceneName)
-r.client.gui.refresh ()
-sphereName = "contactPointSpheredrhy"
-r.client.gui.addSphere (sphereName,0.015,[0.7,0.5,0.3,1])
-r.client.gui.applyConfiguration (sphereName,contactPoint)
-r.client.gui.addToGroup (sphereName, r.sceneName)
-r.client.gui.refresh ()
-
-r.client.gui.removeFromGroup ("initCurvPath", r.sceneName)
-
-lineName = "u2"
-uLine = np.array(x1_J2)+np.array(u)
-r.client.gui.addLine(lineName,[uLine[0],uLine[1],uLine[2]],[contactPoint[0],contactPoint[1],contactPoint[2]],[1,0.3,0,1])
-r.client.gui.addToGroup (lineName, r.sceneName)
-
-
+# Compute manually path length with waypoints
 import math
 wps = ps.getWaypoints(4)
 dist = 0
@@ -173,36 +118,62 @@ for i in range(0,len(wps)-1):
 
 ## Debug Optimization Tools ##############
 import matplotlib.pyplot as plt
-num_log = 31069
+num_log = 31733
 from parseLog import parseCollConstrPoints, parseNodes
 from mutable_trajectory_plot import planarPlot, addNodePlot, addCircleNodePlot, addNodeAndLinePlot, addCorbaPathPlot
 
 contactPoints = parseCollConstrPoints (num_log, '77: contact point = (')
 x1_J1 = parseCollConstrPoints (num_log, '94: x1 in J1 = (')
 x2_J1 = parseCollConstrPoints (num_log, '95: x2 in J1 = (')
-x1_J2 = parseCollConstrPoints (num_log, '112: x1 in J2 = (')
-x2_J2 = parseCollConstrPoints (num_log, '113: x2 in J2 = (') #x2_J2 <=> contactPoints
+x1_J2 = parseCollConstrPoints (num_log, '116: x1 in J2 = (')
+x2_J2 = parseCollConstrPoints (num_log, '117: x2 in J2 = (') #x2_J2 <=> contactPoints
 
-u_vectors_J1 = x2_J1 - x1_J1; u_vectors_J2 = x2_J2 - x1_J2
+collConstrNodes = parseNodes (num_log, '189: qFree_ = ')
+collNodes = parseNodes (num_log, '182: qColl = ')
 
-collConstrNodes = parseNodes (num_log, '186: qFree_ = ')
-collNodes = parseNodes (num_log, '178: qColl = ')
+plt = planarPlot (cl, nInitialPath, ps.numberPaths()-1, plt, 1.5, 2.1)
 
-plt = planarPlot (cl, 7, ps.numberPaths()-1, plt, 2.1)
 i=0
-for i in range(8,ps.numberPaths()-1):
+for i in range(nInitialPath+1,ps.numberPaths()-1):
     plt = addCorbaPathPlot (cl, i, '0.75', plt)
 
-plt = addCircleNodePlot (collConstrNodes, 'b', 0.14, plt)
+plt = addCorbaPathPlot (cl, 8, '0.5', 1, plt)
+
+#plt = addCorbaPathPlot (cl, ps.numberPaths()-1, 'k', 1, plt)
+#plt = addCircleNodePlot (collConstrNodes, 'b', 0.14, plt)
 #plt = addCircleNodePlot (collNodes, 'r', 0.14, plt)
 plt = addNodePlot (contactPoints, 'ko', '', 5.5, plt)
-plt = addNodeAndLinePlot (x1_J1, u_vectors_J1, 'ro', 5, 'r', 1.4, plt)
-plt = addNodeAndLinePlot (x1_J2, u_vectors_J2, 'ro', 5, 'r', 1.4, plt)
-plt = addNodePlot (x2_J1, 'bo', '', 5, plt)
-plt = addNodePlot (x2_J2, 'bo', '', 5, plt)
+plt = addNodeAndLinePlot (x1_J1, x2_J1, 'ro', 'bo', 5, 'r', 1.4, plt)
+plt = addNodeAndLinePlot (x1_J2, x2_J2, 'ro', 'bo', 5, 'r', 1.4, plt)
 
-plt = addNodePlot (collConstrNodes, 'ko', '', 5, plt)
+#plt = addNodePlot (collConstrNodes, 'ko', '', 5, plt)
 
 plt.show()
 
+
+## same with viewer !
+from hpp.gepetto import Viewer, PathPlayer
+r = Viewer (ps)
+pp = PathPlayer (robot.client, r)
+r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
+
+from viewer_display_library_OPTIM import transformInConfig, plotPoints, plotPointsAndLines, plot2DBaseCurvPath
+contactPointsViewer = transformInConfig (contactPoints)
+x1_J1Viewer = transformInConfig (x1_J1)
+x2_J1Viewer = transformInConfig (x2_J1)
+x1_J2Viewer = transformInConfig (x1_J2)
+x2_J2Viewer = transformInConfig (x2_J2)
+
+
+sphereNamePrefix = "sphereContactPoints_"
+plotPoints (r, sphereNamePrefix, contactPointsViewer, 0.02)
+sphereSize=0.01
+lineNamePrefix = "lineJ1_"; sphereNamePrefix = "sphereJ1_"
+plotPointsAndLines (r, lineNamePrefix, sphereNamePrefix, x1_J1Viewer, x2_J1Viewer, sphereSize)
+lineNamePrefix = "lineJ2_"; sphereNamePrefix = "sphereJ2_"
+plotPointsAndLines (r, lineNamePrefix, sphereNamePrefix, x1_J2Viewer, x2_J2Viewer, sphereSize)
+
+dt = 0.2
+plot2DBaseCurvPath (r, cl, dt, 7, "curvPath"+str(7), [1,0.3,0,1])
+plot2DBaseCurvPath (r, cl, dt, ps.numberPaths()-1, "curvPath"+str(ps.numberPaths()-1), [0,1,0.3,1])
 

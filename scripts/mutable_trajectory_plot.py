@@ -15,9 +15,10 @@ dt = 0.02 # global drawing step size
 
 # --------------------------------------------------------------------#
 
-def planarPlot (cl, nPath0, nPath1, plt, lim):
-    plt.gcf().gca().add_artist(plt.Circle((0,0),.5,color='g')) # Plot red cylinder
-    plt.gcf().gca().add_artist(plt.Circle((-3,2),1,color='g')) # cylinder 2 (optional)
+def planarPlot (cl, nPath0, nPath1, plt, lw, lim):
+    #plt.gcf().gca().add_artist(plt.Circle((0,0),.5,color='g')) # Plot red cylinder
+    #plt.gcf().gca().add_artist(plt.Circle((-3,2),1,color='g')) # cylinder 2 (optional)
+    plt = obstacles (plt, True)
     init = cl.problem.getInitialConfig ()
     goal = cl.problem.getGoalConfigs ()[0] # first goal
     
@@ -25,13 +26,13 @@ def planarPlot (cl, nPath0, nPath1, plt, lim):
         plt.plot([cl.problem.configAtParam(nPath1, t)[0], \
                      cl.problem.configAtParam(nPath1, t+dt)[0]], \
                      [cl.problem.configAtParam(nPath1, t)[1], \
-                     cl.problem.configAtParam(nPath1, t+dt)[1]], 'k', linewidth=1.8)
+                     cl.problem.configAtParam(nPath1, t+dt)[1]], 'k', linewidth=lw)
     
     for t in np.arange(0., cl.problem.pathLength(nPath0), dt):
         plt.plot([cl.problem.configAtParam(nPath0, t)[0], \
                  cl.problem.configAtParam(nPath0, t+dt)[0]], \
                  [cl.problem.configAtParam(nPath0, t)[1], \
-                 cl.problem.configAtParam(nPath0, t+dt)[1]], 'r')
+                 cl.problem.configAtParam(nPath0, t+dt)[1]], 'r', linewidth=lw)
     
     #plt.legend()
     plt.axis([-lim, lim, -lim, lim])
@@ -117,9 +118,9 @@ def addPathPlot (cl, path, pathColor, lw, plt):
 # --------------------------------------------------------------------#
 
 # Plot 2D path from problem-solver.
-def addCorbaPathPlot (cl, nPath, pathColor, plt):
+def addCorbaPathPlot (cl, nPath, pathColor, lw, plt):
     for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-        plt.plot([cl.problem.configAtParam(nPath, t)[0], cl.problem.configAtParam(nPath, t+dt)[0]], [cl.problem.configAtParam(nPath, t)[1], cl.problem.configAtParam(nPath, t+dt)[1]], pathColor, linewidth=1.5)
+        plt.plot([cl.problem.configAtParam(nPath, t)[0], cl.problem.configAtParam(nPath, t+dt)[0]], [cl.problem.configAtParam(nPath, t)[1], cl.problem.configAtParam(nPath, t+dt)[1]], pathColor, linewidth=lw)
     return plt
 
 # --------------------------------------------------------------------#
@@ -148,13 +149,54 @@ def plotRectangles_parab (plt, obstacles):
 # --------------------------------------------------------------------#
 
 # Plot 2D nodes (from parseLog) with given color, text and size.
-# Plot also lines given in a list and associated to nodes. (e.g. 'x1_J1' nodes and 'u' lines)
-def addNodeAndLinePlot (nodeList, lineList, nodeColor, markerSize, lineColor, lw, plt):
+# Plot also lines between each combination of the two nodes lists.
+def addNodeAndLinePlot (nodeList1, nodeList2, nodeColor1, nodeColor2, markerSize, lineColor, lw, plt):
     i = 0
-    for i in range(0,len(nodeList)):
-        n = nodeList[i]
-        u = lineList[i]
-        plt.plot(n[0], n[1], nodeColor,markersize=markerSize)
-        plt.plot([n[0], n[0]+u[0]], [n[1], n[1]+u[1]], lineColor, linewidth=lw)
+    for i in range(0,len(nodeList1)):
+        n1 = nodeList1[i]
+        n2 = nodeList2[i]
+        plt.plot(n1[0], n1[1], nodeColor1, markersize=markerSize)
+        plt.plot(n2[0], n2[1], nodeColor2, markersize=markerSize)
+        plt.plot([n1[0], n2[0]], [n1[1], n2[1]], lineColor, linewidth=lw)
         i = i+1
     return plt
+
+
+# --------------------------------------------------------------------#
+
+# Plot desired obstacles: if bool 'concave' is True plot concave obstacles, else plot cylinder
+def obstacles (plt, concave):
+    dr=0
+    if concave:
+        plt.gcf().gca().add_artist(plt.Circle((0.9,0.4),.6+dr,color='green')) # orange
+        #plt.text(0.9, 0.4, r'obst1', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((1.5,0.4),.6+dr,color='green')) # orange
+        #plt.text(1.5, 0.3, r'obst1bis', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((1.2,-3.5),1.2+dr,color='green'))
+        #plt.text(1.2, -3.5, r'obst2', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((2.6,2.5),1.2+dr,color='green'))
+        #plt.text(2.6, 2.5, r'obst6', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-2.5,1.2),.6+dr,color='green'))
+        #plt.text(-2.5, 1.2, r'obst4', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-1,4),.6+dr,color='green'))
+        #plt.text(-1, 4, r'obst5', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-2.8,-2.2),1.2+dr,color='green'))
+        #plt.text(-2.8, -2.2, r'obst3', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((3.8,-1),.6+dr,color='green'))
+        #plt.text(3.8, -1, r'obst7', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Rectangle((-0.4,-0.9),0.8+dr,1.8,color='green'))
+        #plt.text(0, 0, r'obst_base', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((1.5,-1.8),0.6+dr,color='green'))
+        #plt.text(1.5, -1.8, r'obst8', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((2., 1.2),0.4+dr,color='green')) # light_blue
+        #plt.text(2., 1.2, r'obst9', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-1.6,1.4),0.5+dr,color='green')) # yellow
+        #plt.text(-1.6, 1.4, r'obst10', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-1.5,2.3),0.5+dr,color='green')) # yellow
+        #plt.text(-1.5, 2.3, r'obst11', fontsize=11)
+        plt.gcf().gca().add_artist(plt.Circle((-0.9,3.),0.5+dr,color='green')) # yellow
+        #plt.text(-0.9, 3., r'obst12', fontsize=11)
+    else:
+        plt.gcf().gca().add_artist(plt.Circle((0,0),.5,color='r')) # Plot red cylinder
+    return plt
+

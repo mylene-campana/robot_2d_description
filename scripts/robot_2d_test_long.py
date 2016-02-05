@@ -8,6 +8,7 @@ from hpp.corbaserver import Client
 import time
 import sys
 import matplotlib.pyplot as plt
+import numpy as np
 sys.path.append('/local/mcampana/devel/hpp/src/test-hpp/script')
 
 robot = Robot ('robot_2d')
@@ -32,13 +33,126 @@ ps.setInitialConfig (q9); ps.addGoalConfig (q10); ps.solve (); ps.resetGoalConfi
 ps.setInitialConfig (q10); ps.addGoalConfig (q11); ps.solve (); ps.resetGoalConfigs ()
 ps.setInitialConfig (q11); ps.addGoalConfig (q12); ps.solve (); ps.resetGoalConfigs ()
 ps.setInitialConfig (q1); ps.addGoalConfig (q12); ps.solve (); # 11
-
-ps.addPathOptimizer("GradientBased")
-#ps.addPathOptimizer("Prune")
-cl.problem.optimizePath(11)
-
 cl.problem.pathLength(11)
-cl.problem.pathLength(12)
+len(ps.getWaypoints (11))
+
+ps.addPathOptimizer("Prune")
+ps.optimizePath (11)
+ps.numberPaths()
+ps.pathLength(ps.numberPaths()-1)
+len(ps.getWaypoints (ps.numberPaths()-1))
+
+ps.clearPathOptimizers()
+ps.addPathOptimizer("GradientBased")
+ps.optimizePath (11)
+ps.numberPaths()
+ps.pathLength(ps.numberPaths()-1)
+tGB = cl.problem.getTimeGB ()
+timeValuesGB = cl.problem.getTimeValues ()
+gainValuesGB = cl.problem.getGainValues ()
+newGainValuesGB = ((1-np.array(gainValuesGB))*100).tolist() #percentage of initial length-value
+
+ps.clearPathOptimizers()
+ps.addPathOptimizer('RandomShortcut')
+ps.optimizePath (11)
+ps.pathLength(ps.numberPaths()-1)
+timeValuesRS = cl.problem.getTimeValues ()
+gainValuesRS = cl.problem.getGainValues ()
+newGainValuesRS = ((1-np.array(gainValuesRS))*100).tolist()
+
+ps.optimizePath (11)
+ps.pathLength(ps.numberPaths()-1)
+timeValuesRS2 = cl.problem.getTimeValues ()
+gainValuesRS2 = cl.problem.getGainValues ()
+newGainValuesRS2 = ((1-np.array(gainValuesRS2))*100).tolist()
+
+ps.clearPathOptimizers()
+ps.addPathOptimizer('PartialShortcut')
+ps.optimizePath (11)
+ps.pathLength(ps.numberPaths()-1)
+
+
+
+## -------------------------------------
+import matplotlib.pyplot as plt
+from plotfunctions import optAndConcatenate, getValIndex, computeMeansVector, reducedVectors, curvPlot, curvSdPlot
+# OPTIMIZE AND Concatenate RS PRS values:
+globalTimeValuesRS = []; globalGainValuesRS = []
+globalTimeValuesPRS = []; globalGainValuesPRS = []
+nbOpt = 10 # number of launchs of RS and PRS
+optAndConcatenate (cl, ps, 11, nbOpt, 'RandomShortcut', globalTimeValuesRS, globalGainValuesRS)
+optAndConcatenate (cl, ps, 11, nbOpt, 'PartialShortcut', globalTimeValuesPRS, globalGainValuesPRS)
+
+nbPoints = 100 # number of points in graph
+tVec = np.arange(0,tGB,tGB/nbPoints)
+moyVectorRS = []; sdVectorRS = []; moyVectorPRS = []; sdVectorPRS = [];
+computeMeansVector (nbOpt, tVec, moyVectorRS, sdVectorRS, globalTimeValuesRS, globalGainValuesRS)
+computeMeansVector (nbOpt, tVec, moyVectorPRS, sdVectorPRS, globalTimeValuesPRS, globalGainValuesPRS)
+
+tReduceVectorRS = []; meanReduceVectorRS = []; sdReduceVectorRS = [];
+tReduceVectorPRS = []; meanReduceVectorPRS = []; sdReduceVectorPRS = [];
+reducedVectors (tVec, moyVectorRS, sdVectorRS, tReduceVectorRS, meanReduceVectorRS, sdReduceVectorRS)
+reducedVectors (tVec, moyVectorPRS, sdVectorPRS, tReduceVectorPRS, meanReduceVectorPRS, sdReduceVectorPRS)
+
+# Plot lengthGain (t);
+plt.axis([-.004, tGB+0.004, 45, 102])
+plt.xlabel('t (s)'); plt.ylabel('Relative length reduction (%)')
+vectorLengthGB = len (timeValuesGB)
+plt.plot([0,tGB], [newGainValuesGB[vectorLengthGB-1],newGainValuesGB[vectorLengthGB-1]], 'b--')
+plt.plot(0, 100, 'bo'); plt.plot([0,timeValuesGB[0]], [100,100], 'b', 1.5)
+plt = curvPlot (plt, timeValuesGB, newGainValuesGB, 'o', 'b', 1.5)
+plt = curvSdPlot (plt, tReduceVectorRS, meanReduceVectorRS, sdReduceVectorRS, '0.55', 0.8, 0.002)
+plt = curvPlot (plt, tReduceVectorRS, meanReduceVectorRS, '*', 'r', 1.5)
+plt = curvSdPlot (plt, tReduceVectorPRS, meanReduceVectorPRS, sdReduceVectorPRS, '0.55', 0.8, 0.002)
+plt = curvPlot (plt, tReduceVectorPRS, meanReduceVectorPRS, '+', 'g', 1.5)
+plt.show()
+
+# For different alpha_init
+plt.axis([-.004, max(tGB,max(tGB2,tGB3))+0.004, 45, 102])
+plt.xlabel('t (s)'); plt.ylabel('Relative remaining length (%)')
+vectorLengthGB = len (timeValuesGB)
+#plt.plot([0,tGB], [newGainValuesGB[vectorLengthGB-1],newGainValuesGB[vectorLengthGB-1]], 'b--')
+plt.plot(0, 100, 'bo'); plt.plot([0,timeValuesGB[0]], [100,100], 'b', linewidth=1.5)
+plt = curvPlot (plt, tGB, timeValuesGB, newGainValuesGB, 'o', 'b', 1.5)
+vectorLengthGB2 = len (timeValuesGB2)
+plt.plot(0, 100, 'g*'); plt.plot([0,timeValuesGB2[0]], [100,100], 'g', linewidth=1.5)
+plt = curvPlot (plt, tGB, timeValuesGB2, newGainValuesGB2, '*', 'g', 1.5)
+vectorLengthGB3 = len (timeValuesGB3)
+plt.plot(0, 100, 'r+'); plt.plot([0,timeValuesGB3[0]], [100,100], 'r', linewidth=1.5)
+plt = curvPlot (plt, tGB, timeValuesGB3, newGainValuesGB3, '+', 'r', 1.5)
+vectorLengthGB4 = len (timeValuesGB4)
+plt.plot(0, 100, 'c+'); plt.plot([0,timeValuesGB4[0]], [100,100], 'c', linewidth=1.5)
+plt = curvPlot (plt, tGB, timeValuesGB4, newGainValuesGB4, '+', 'c', 1.5)
+plt.show()
+
+## -------------------------------------
+
+cl.problem.setAlphaInit (0.05)
+ps.optimizePath (0); tGB2 = cl.problem.getTimeGB ()
+timeValuesGB2 = cl.problem.getTimeValues (); gainValuesGB2 = cl.problem.getGainValues ()
+newGainValuesGB2 = ((1-np.array(gainValuesGB2))*100).tolist() #percentage of initial length-value
+
+cl.problem.setAlphaInit (0.3)
+ps.optimizePath (0); tGB3 = cl.problem.getTimeGB ()
+timeValuesGB3 = cl.problem.getTimeValues (); gainValuesGB3 = cl.problem.getGainValues ()
+newGainValuesGB3 = ((1-np.array(gainValuesGB3))*100).tolist() #percentage of initial length-value
+
+cl.problem.setAlphaInit (0.4)
+ps.optimizePath (0); tGB4 = cl.problem.getTimeGB ()
+timeValuesGB4 = cl.problem.getTimeValues (); gainValuesGB4 = cl.problem.getGainValues ()
+newGainValuesGB4 = ((1-np.array(gainValuesGB4))*100).tolist() #percentage of initial length-value
+
+## -------------------------------------
+
+import matplotlib.pyplot as plt
+from mutable_trajectory_plot import planarPlot, addNodePlot
+from parseLog import parseCollConstrPoints
+num_log = 30463
+contactPoints = parseCollConstrPoints (num_log, '77: contact point = (')
+plt = planarPlot (cl, 11, ps.numberPaths()-1, plt, 1.5, 7)
+plt = addNodePlot (contactPoints, 'ko', '', 5.5, plt)
+plt.show()
+
 
 len(cl.problem.nodes ())
 len(ps.getWaypoints (0))
@@ -55,7 +169,7 @@ r.loadObstacleModel ("robot_2d_description","cylinder_obstacle2","cylinder_obsta
 ## Debug Optimization Tools ##############
 
 import matplotlib.pyplot as plt
-num_log = 26871
+num_log = 20855
 from parseLog import parseNodes, parsePathVector
 from mutable_trajectory_plot import planarPlot, addNodePlot, addPathPlot
 
@@ -111,62 +225,66 @@ cl.problem.resetGoalConfigs ()
 
 
 
-from hpp.gepetto import Viewer, PathPlayer
-r = Viewer (ps)
-pp = PathPlayer (robot.client, r)
-r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
-
-# plot paths in viewer
-import numpy as np
-dt = 0.2
-nPath = 11
-lineNamePrefix = "initial_path"
-points = []
-for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-    points.append ([cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0])
-
-r.client.gui.addCurve (lineNamePrefix,points,[1,0.3,0,1])
-r.client.gui.addToGroup (lineNamePrefix, r.sceneName)
-
-nPath = 12
-lineNamePrefix = "optim_path"
-points = []
-for t in np.arange(0., cl.problem.pathLength(nPath), dt):
-    points.append ([cl.problem.configAtParam(nPath, t)[0],cl.problem.configAtParam(nPath, t)[1],0])
-
-r.client.gui.addCurve (lineNamePrefix,points,[0.3,1,0.3,1])
-r.client.gui.addToGroup (lineNamePrefix, r.sceneName)
-
 
 
 ## Debug Optimization Tools ##############
 import matplotlib.pyplot as plt
-num_log = 30694
+num_log = 20855
 from parseLog import parseCollConstrPoints, parseNodes
 from mutable_trajectory_plot import planarPlot, addNodePlot, addCircleNodePlot, addNodeAndLinePlot, addCorbaPathPlot
 
 contactPoints = parseCollConstrPoints (num_log, '77: contact point = (')
 x1_J1 = parseCollConstrPoints (num_log, '94: x1 in J1 = (')
 x2_J1 = parseCollConstrPoints (num_log, '95: x2 in J1 = (')
-x1_J2 = parseCollConstrPoints (num_log, '112: x1 in J2 = (')
-x2_J2 = parseCollConstrPoints (num_log, '113: x2 in J2 = (') #x2_J2 <=> contactPoints
+x1_J2 = parseCollConstrPoints (num_log, '116: x1 in J2 = (')
+x2_J2 = parseCollConstrPoints (num_log, '117: x2 in J2 = (') #x2_J2 <=> contactPoints
 
-u_vectors_J1 = x2_J1 - x1_J1; u_vectors_J2 = x2_J2 - x1_J2
+collConstrNodes = parseNodes (num_log, '189: qFree_ = ')
+collNodes = parseNodes (num_log, '182: qColl = ')
 
-collConstrNodes = parseNodes (num_log, '186: qFree_ = ')
-collNodes = parseNodes (num_log, '178: qColl = ')
+plt = planarPlot (cl, 11, ps.numberPaths()-1, plt, 1.5, 7)
+i=12; iMax = ps.numberPaths()-1;
+while (i < iMax):
+    plt = addCorbaPathPlot (cl, i, '0.75', 0.9, plt)
+    i = i + 2
 
-plt = planarPlot (cl, 11, 15, plt, 7)
-plt = addCorbaPathPlot (cl, 13, '0.75', plt)
-plt = addCorbaPathPlot (cl, 14, '0.5', plt)
+#plt = addCorbaPathPlot (cl, 0, 'rk', 1.6, plt)
+plt = addCorbaPathPlot (cl, ps.numberPaths()-1, 'k', 1.5, plt)
 plt = addCircleNodePlot (collConstrNodes, 'b', 0.14, plt)
 #plt = addCircleNodePlot (collNodes, 'r', 0.14, plt)
 plt = addNodePlot (contactPoints, 'ko', '', 5.5, plt)
-plt = addNodeAndLinePlot (x1_J1, u_vectors_J1, 'ro', 5, 'r', 1.4, plt)
-plt = addNodeAndLinePlot (x1_J2, u_vectors_J2, 'ro', 5, 'r', 1.4, plt)
-plt = addNodePlot (x2_J1, 'bo', '', 5, plt)
-plt = addNodePlot (x2_J2, 'bo', '', 5, plt)
+plt = addNodeAndLinePlot (x1_J1, x2_J1, 'ro', 'bo', 4, 'r', 1.3, plt)
+plt = addNodeAndLinePlot (x1_J2, x2_J2, 'ro', 'bo', 4, 'r', 1.3, plt)
+
+plt = addNodePlot (collConstrNodes, 'ko', '', 5, plt)
 
 plt.show()
 
+
+## same with viewer !
+from hpp.gepetto import Viewer, PathPlayer
+r = Viewer (ps)
+pp = PathPlayer (robot.client, r)
+r.loadObstacleModel ("robot_2d_description","cylinder_obstacle","cylinder_obstacle")
+
+from viewer_display_library_OPTIM import transformInConfig, plotPoints, plotPointsAndLines, plot2DBaseCurvPath
+contactPointsViewer = transformInConfig (contactPoints)
+x1_J1Viewer = transformInConfig (x1_J1)
+x2_J1Viewer = transformInConfig (x2_J1)
+x1_J2Viewer = transformInConfig (x1_J2)
+x2_J2Viewer = transformInConfig (x2_J2)
+
+
+sphereNamePrefix = "sphereContactPoints_"
+plotPoints (r, sphereNamePrefix, contactPointsViewer, 0.02)
+sphereSize=0.01
+lineNamePrefix = "lineJ1_"; sphereNamePrefix = "sphereJ1_"
+plotPointsAndLines (r, lineNamePrefix, sphereNamePrefix, x1_J1Viewer, x2_J1Viewer, sphereSize)
+lineNamePrefix = "lineJ2_"; sphereNamePrefix = "sphereJ2_"
+plotPointsAndLines (r, lineNamePrefix, sphereNamePrefix, x1_J2Viewer, x2_J2Viewer, sphereSize)
+
+dt = 0.2
+plot2DBaseCurvPath (r, cl, dt, 11, "curvPathInitial", [1,0.3,0,1])
+plot2DBaseCurvPath (r, cl, dt, 12, "curvPathRS", [0,0,1,1])
+plot2DBaseCurvPath (r, cl, dt, ps.numberPaths()-1, "curvPathGB", [0,1,0,1])
 
